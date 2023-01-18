@@ -1,10 +1,14 @@
 import React, { FC, useEffect, useState } from "react";
+import { GiBrickWall } from "react-icons/gi";
+import { FaTrashAlt } from "react-icons/fa";
+import { BiScan } from "react-icons/bi";
 import Matrix from "../dataStructures/Matrix";
 import Node from "../dataStructures/Node";
 interface Props {
   matrix: Matrix;
 }
 const Grid: FC<Props> = ({ matrix }) => {
+  const [wallMode, setWallMode] = useState<boolean>(false);
   const [Speed, setSpeed] = useState<any>();
   const [startX, setStartX] = useState(4);
   const [startY, setStartY] = useState(10);
@@ -33,9 +37,6 @@ const Grid: FC<Props> = ({ matrix }) => {
       iter++;
       queue.push(matrix.matrixGraph[snx][sny]);
       current = queue.shift()!;
-      // if(current.wall){
-      //   current = queue.shift();
-      // }
       matrix.matrixGraph[dnx][dny].n_val = 5;
       if (iter > 18) {
         clearInterval(inter);
@@ -54,6 +55,7 @@ const Grid: FC<Props> = ({ matrix }) => {
         );
         return;
       }
+
       if (current.back) {
         if (current.back!.n_val === 0) {
           if (!!!current.back!.wall) {
@@ -126,6 +128,9 @@ const Grid: FC<Props> = ({ matrix }) => {
         document.getElementById(
           `node-${snx + xmoves}-${sny + ymoves}`
         )!.style.backgroundColor = "cyan";
+        if (matrix.matrixGraph[xmoves][ymoves].wall) {
+          ymoves++;
+        }
       }
       if (dnx > snx && ymoves < dny - sny) {
         ymoves++;
@@ -144,6 +149,40 @@ const Grid: FC<Props> = ({ matrix }) => {
       }
     }, 50);
   };
+
+  // const pathFind: Function = (
+  //   snx: number,
+  //   sny: number,
+  //   dnx: number,
+  //   dny: number
+  // ): void => {
+  //   let xmoves: number = 0;
+  //   let ymoves: number = 0;
+  //   const inter1 = setInterval(() => {
+  //     if (dny > sny && xmoves < dnx - snx) {
+  //       xmoves++;
+  //       document.getElementById(
+  //         `node-${snx + xmoves}-${sny + ymoves}`
+  //       )!.style.backgroundColor = "cyan";
+  //     }
+  //     if (dnx > snx && ymoves < dny - sny) {
+  //       ymoves++;
+  //       if (
+  //         xmoves >= dnx - snx &&
+  //         matrix.matrixGraph[xmoves][ymoves] != matrix.matrixGraph[dnx][dny]
+  //       ) {
+  //         document.getElementById(
+  //           `node-${snx + xmoves}-${sny + ymoves}`
+  //         )!.style.backgroundColor = "cyan";
+  //       }
+  //     }
+  //     if (xmoves + ymoves > 60) {
+  //       clearInterval(inter1);
+  //       return;
+  //     }
+  //   }, 50);
+  // };
+
   useEffect(() => {
     setLoading(false);
   }, []);
@@ -155,7 +194,7 @@ const Grid: FC<Props> = ({ matrix }) => {
         <div>
           <div>
             <input
-              id="slider"
+              className="slider"
               style={{ width: "100%", cursor: "pointer" }}
               type="range"
               min="0"
@@ -168,8 +207,7 @@ const Grid: FC<Props> = ({ matrix }) => {
           </div>
           <div
             style={{
-              border: "solid 2px lightseagreen",
-              borderRadius: "3px",
+              boxShadow: "0px 0px 6px black",
               display: "grid",
               justifyContent: "center",
             }}
@@ -182,30 +220,36 @@ const Grid: FC<Props> = ({ matrix }) => {
                       <td
                         id={`node-${se.c_col}-${se.c_row}`}
                         onMouseOver={() => {
-                          document.getElementById(
-                            `node-${se.c_col}-${se.c_row}`
-                          )!.style.background = "grey";
-                          se.wall = true;
+                          if (wallMode) {
+                            document.getElementById(
+                              `node-${se.c_col}-${se.c_row}`
+                            )!.style.background = "grey";
+                            se.wall = true;
+                          }
                         }}
-                        // onDoubleClick={(e) => {
-                        //   document.getElementById(
-                        //     `node-${se.c_col}-${se.c_row}`
-                        //   )!.style.animation = "choose 0.2s ease-in";
-                        //   e.currentTarget.style.backgroundColor = "indigo";
-                        //   setStartX(se.c_col);
-                        //   setStartY(se.c_row);
-                        // }}
-                        // onClick={(e) => {
-                        //   e.currentTarget.style.backgroundColor = "white";
-                        //   setDesX(se.c_col);
-                        //   setDesY(se.c_row);
-                        // }}
+                        onDoubleClick={(e) => {
+                          if (!wallMode) {
+                            document.getElementById(
+                              `node-${se.c_col}-${se.c_row}`
+                            )!.style.animation = "choose 0.2s ease-in";
+                            e.currentTarget.style.backgroundColor = "indigo";
+                            setStartX(se.c_col);
+                            setStartY(se.c_row);
+                          }
+                        }}
+                        onClick={(e) => {
+                          if (!wallMode) {
+                            e.currentTarget.style.backgroundColor = "white";
+                            setDesX(se.c_col);
+                            setDesY(se.c_row);
+                          }
+                        }}
                         style={{
                           transition: "1s",
                           cursor: "pointer",
-                          border: "solid 0.5px lightseagreen",
+                          border: "solid 1px black",
                           padding: "10px",
-                          backgroundColor: "black",
+                          backgroundColor: "rgb(28, 28, 28)",
                           margin: "auto",
                         }}
                       ></td>
@@ -225,7 +269,10 @@ const Grid: FC<Props> = ({ matrix }) => {
             marginTop: "15px",
           }}
         >
-          <button style={{ width: "100px" }}>clear grid</button>
+          <button style={{ width: "100px" }}>
+            {" "}
+            <FaTrashAlt style={{ fontSize: "20px", color: "white" }} />{" "}
+          </button>
           <button
             style={{ padding: "20px", width: "100px" }}
             onClick={() => {
@@ -241,7 +288,21 @@ const Grid: FC<Props> = ({ matrix }) => {
               );
             }}
           >
-            bf scan
+            <BiScan style={{ fontSize: "20px" }} />
+          </button>
+          <button
+            onClick={() => setWallMode(true)}
+            onDoubleClick={() => setWallMode(false)}
+            style={{
+              border: wallMode ? "solid 1px lightseagreen" : "none",
+            }}
+          >
+            {" "}
+            <GiBrickWall
+              style={{
+                fontSize: "20px",
+              }}
+            />
           </button>
         </div>
       </>
